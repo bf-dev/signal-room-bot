@@ -36,20 +36,26 @@ jobs:
           $p | Wait-Process -Timeout 180
           if ($p.ExitCode -ne 0) { throw "selftest exit $($p.ExitCode)" }
       - name: package ZIP (guide travels inside)
-        shell: powershell
+        shell: pwsh
         run: |
-          Copy-Item "_읽어주세요.txt" "dist\signal-room-bot\_읽어주세요.txt"
-          $version = (Select-String -Path app\config.py -Pattern 'APP_VERSION = "(.+)"').Matches[0].Groups[1].Value
-          Compress-Archive -Path "dist\signal-room-bot" -DestinationPath "signal-room-bot-$version.zip" -Force
-          Write-Host "packaged signal-room-bot-$version.zip"
+          # pwsh, and the guide is matched by pattern: Windows PowerShell 5.1 reads this
+          # YAML-embedded script as ANSI and mangles the Korean filename literal.
+          $guide = Get-ChildItem -Path . -Filter "_*.txt" | Select-Object -First 1
+          if (-not $guide) { throw "Korean guide file not found in repo root" }
+          Copy-Item $guide.FullName (Join-Path "dist/signal-room-bot" $guide.Name)
+          $version = (Select-String -Path app/config.py -Pattern 'APP_VERSION = "(.+)"').Matches[0].Groups[1].Value
+          Compress-Archive -Path "dist/signal-room-bot" -DestinationPath "signal-room-bot-$version.zip" -Force
+          Write-Host "packaged signal-room-bot-$version.zip with $($guide.Name)"
       - name: extract the packaged ZIP and run THAT copy
-        shell: powershell
+        shell: pwsh
         run: |
           $zip = Get-ChildItem "signal-room-bot-*.zip" | Select-Object -First 1
-          Expand-Archive -Path $zip.FullName -DestinationPath "C:\extracted" -Force
-          if (-not (Test-Path "C:\extracted\signal-room-bot\_읽어주세요.txt")) { throw "guide missing from ZIP" }
-          if (-not (Test-Path "C:\extracted\signal-room-bot\signal-room-bot.exe")) { throw "exe missing from ZIP" }
-          Write-Host ("extracted files: " + (Get-ChildItem -Recurse "C:\extracted\signal-room-bot" | Measure-Object).Count)
+          Write-Host ("zip bytes: " + $zip.Length)
+          Expand-Archive -Path $zip.FullName -DestinationPath "C:/extracted" -Force
+          $guide = Get-ChildItem -Path "C:/extracted/signal-room-bot" -Filter "_*.txt"
+          if (-not $guide) { throw "guide missing from ZIP" }
+          if (-not (Test-Path "C:/extracted/signal-room-bot/signal-room-bot.exe")) { throw "exe missing from ZIP" }
+          Write-Host ("extracted files: " + (Get-ChildItem -Recurse "C:/extracted/signal-room-bot" | Measure-Object).Count + ", guide: " + $guide.Name)
       - name: gui screenshot 메인 (from the extracted ZIP)
         run: powershell -File ci/gui_screenshot.ps1 -Exe "C:\extracted\signal-room-bot\signal-room-bot.exe" -Out screenshots/gui.png -Tab 0 -TimingOut screenshots/coldstart.txt
       - name: gui screenshot 핫키 설정
