@@ -31,11 +31,15 @@ jobs:
           $p | Wait-Process -Timeout 180
           if ($p.ExitCode -ne 0) { throw "selftest exit $($p.ExitCode)" }
         shell: powershell
-      - name: gui screenshot
-        run: powershell -File ci/gui_screenshot.ps1
+      - name: gui screenshot (메인)
+        run: powershell -File ci/gui_screenshot.ps1 -Out screenshots/gui.png -Tab 0
+      - name: gui screenshot (핫키 설정)
+        run: powershell -File ci/gui_screenshot.ps1 -Out screenshots/gui-hotkeys.png -Tab 1
+      - name: gui screenshot (계정 설정)
+        run: powershell -File ci/gui_screenshot.ps1 -Out screenshots/gui-accounts.png -Tab 2
       - uses: actions/upload-artifact@v4
         with:
           name: signal-room-bot
           path: |
             dist/signal-room-bot.exe
-            screenshots/gui.png
+            screenshots/*.png

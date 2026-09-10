@@ -1,10 +1,11 @@
 # Capture the running GUI from a real desktop session (GitHub Actions windows-latest
 # runs interactively enough for PrintWindow to return real pixels).
-param([string]$Exe = "dist\signal-room-bot.exe", [int]$Wait = 40)
+param([string]$Exe = "dist\signal-room-bot.exe", [int]$Wait = 30, [string]$Out = "screenshots/gui.png", [int]$Tab = 0)
 $ErrorActionPreference = "Continue"
 New-Item -ItemType Directory -Force -Path screenshots | Out-Null
 $env:SIGNALROOM_NO_UPLOAD = "1"
 $env:GUIDEMO_HOLD_MS = "180000"
+$env:SIGNALROOM_DEMO_TAB = "$Tab"
 Start-Process -FilePath $Exe -ArgumentList "--guidemo"
 Start-Sleep -Seconds $Wait
 
@@ -38,6 +39,6 @@ foreach ($i in 1..30) {
   Start-Sleep -Seconds 2
 }
 if ($handle -eq [IntPtr]::Zero) { Write-Host "no window handle"; exit 1 }
-[Cap]::Shot($handle, (Join-Path (Get-Location) "screenshots\gui.png"))
-Write-Host "captured screenshots\gui.png"
+[Cap]::Shot($handle, (Join-Path (Get-Location) $Out))
+Write-Host "captured $Out"
 Get-Process -Name "signal-room-bot" -ErrorAction SilentlyContinue | Stop-Process -Force

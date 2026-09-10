@@ -1196,12 +1196,12 @@ def demo_fill(app):
                  "  → [달려사냥꾼] 청산 완료~ 감사합니다",
                  summary]:
         app._append_log("%s  %s" % (time.strftime("%H:%M:%S"), line))
-    try:
-        path = os.path.join(paths.cards_dir(), "preview.png")
-        card.render(path, "XAUUSDe", "buy", 1.00, 4435.95, 4438.17, 222.00)
-        ImagePreview(app.root, path, "계정마다 랏과 수익금이 다르게 만들어집니다.")
-    except Exception:  # noqa: BLE001
-        pass
+    if not int(os.environ.get("SIGNALROOM_DEMO_TAB", "0") or 0):
+        try:
+            path = os.path.join(paths.cards_dir(), "preview.png")
+            card.render(path, "XAUUSDe", "buy", 1.00, 4435.95, 4438.17, 222.00)
+        except Exception:  # noqa: BLE001
+            pass
 
 
 def run(demo=False, hold_ms=0):
@@ -1209,7 +1209,11 @@ def run(demo=False, hold_ms=0):
     app = App(root, demo=demo)
     root.protocol("WM_DELETE_WINDOW", app.on_exit)
     if demo:
+        # SIGNALROOM_DEMO_TAB 은 우리 CI 가 화면별 스크린샷을 찍을 때만 씁니다.
+        tab = int(os.environ.get("SIGNALROOM_DEMO_TAB", "0") or 0)
         root.after(600, lambda: demo_fill(app))
+        if tab:
+            root.after(1400, lambda: app.tabs.select(tab))
     if hold_ms:
         root.after(hold_ms, root.destroy)
     root.mainloop()
