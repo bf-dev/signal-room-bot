@@ -5,6 +5,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# ONEDIR, not onefile, and this is not a style choice: a 29MB onefile deliverable
+# unpacked ~1300 files into %TEMP% on every launch, took 3m44s to start on a real
+# customer PC and was then blocked by Windows ("액세스할 수 없습니다"). The customer
+# gets a folder inside a ZIP, with the Korean guide next to the exe.
 jobs:
   windows:
     runs-on: windows-latest
@@ -17,29 +21,45 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt pyinstaller
-      - name: build exe
+      - name: build (onedir)
         run: >
-          pyinstaller --onefile --noconsole --name signal-room-bot
+          pyinstaller --onedir --noconsole --name signal-room-bot
           --paths app --collect-all telethon --hidden-import PIL._tkinter_finder
           --exclude-module numpy --exclude-module pandas --exclude-module matplotlib
           app/main.py
       - name: card render selftest
-        run: dist\signal-room-bot.exe --cardtest
+        run: dist\signal-room-bot\signal-room-bot.exe --cardtest
       - name: gui construct selftest
+        shell: powershell
         run: |
-          $p = Start-Process -FilePath "dist\signal-room-bot.exe" -ArgumentList "--selftest" -PassThru
+          $p = Start-Process -FilePath "dist\signal-room-bot\signal-room-bot.exe" -ArgumentList "--selftest" -PassThru
           $p | Wait-Process -Timeout 180
           if ($p.ExitCode -ne 0) { throw "selftest exit $($p.ExitCode)" }
+      - name: package ZIP (guide travels inside)
         shell: powershell
-      - name: gui screenshot (메인)
-        run: powershell -File ci/gui_screenshot.ps1 -Out screenshots/gui.png -Tab 0
-      - name: gui screenshot (핫키 설정)
-        run: powershell -File ci/gui_screenshot.ps1 -Out screenshots/gui-hotkeys.png -Tab 1
-      - name: gui screenshot (계정 설정)
-        run: powershell -File ci/gui_screenshot.ps1 -Out screenshots/gui-accounts.png -Tab 2
+        run: |
+          Copy-Item "_읽어주세요.txt" "dist\signal-room-bot\_읽어주세요.txt"
+          $version = (Select-String -Path app\config.py -Pattern 'APP_VERSION = "(.+)"').Matches[0].Groups[1].Value
+          Compress-Archive -Path "dist\signal-room-bot" -DestinationPath "signal-room-bot-$version.zip" -Force
+          Write-Host "packaged signal-room-bot-$version.zip"
+      - name: extract the packaged ZIP and run THAT copy
+        shell: powershell
+        run: |
+          $zip = Get-ChildItem "signal-room-bot-*.zip" | Select-Object -First 1
+          Expand-Archive -Path $zip.FullName -DestinationPath "C:\extracted" -Force
+          if (-not (Test-Path "C:\extracted\signal-room-bot\_읽어주세요.txt")) { throw "guide missing from ZIP" }
+          if (-not (Test-Path "C:\extracted\signal-room-bot\signal-room-bot.exe")) { throw "exe missing from ZIP" }
+          Write-Host ("extracted files: " + (Get-ChildItem -Recurse "C:\extracted\signal-room-bot" | Measure-Object).Count)
+      - name: gui screenshot 메인 (from the extracted ZIP)
+        run: powershell -File ci/gui_screenshot.ps1 -Exe "C:\extracted\signal-room-bot\signal-room-bot.exe" -Out screenshots/gui.png -Tab 0 -TimingOut screenshots/coldstart.txt
+      - name: gui screenshot 핫키 설정
+        run: powershell -File ci/gui_screenshot.ps1 -Exe "C:\extracted\signal-room-bot\signal-room-bot.exe" -Out screenshots/gui-hotkeys.png -Tab 1
+      - name: gui screenshot 계정 설정
+        run: powershell -File ci/gui_screenshot.ps1 -Exe "C:\extracted\signal-room-bot\signal-room-bot.exe" -Out screenshots/gui-accounts.png -Tab 2
       - uses: actions/upload-artifact@v4
         with:
           name: signal-room-bot
           path: |
-            dist/signal-room-bot.exe
+            signal-room-bot-*.zip
             screenshots/*.png
+            screenshots/coldstart.txt

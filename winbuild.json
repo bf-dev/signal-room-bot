@@ -3,7 +3,7 @@
   "entry": "app/main.py",
   "requirements": "requirements.txt",
   "pyinstaller": [
-    "--onefile",
+    "--onedir",
     "--noconsole",
     "--paths",
     "app",
@@ -21,8 +21,13 @@
     "IPython"
   ],
   "screenshot": {
-    "args": ["--guidemo"],
-    "wait": 30,
-    "env": {"SIGNALROOM_NO_UPLOAD": "1", "GUIDEMO_HOLD_MS": "180000"}
+    "args": [
+      "--guidemo"
+    ],
+    "wait": 12,
+    "env": {
+      "SIGNALROOM_NO_UPLOAD": "1",
+      "GUIDEMO_HOLD_MS": "180000"
+    }
   }
 }
