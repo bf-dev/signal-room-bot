@@ -3,27 +3,26 @@
 
 Holds: their Telegram api_id/api_hash, the account list (label + session name +
 enabled flag, never a password), the target room, the burst timing and the
-phrase pools. Bot tokens ARE stored here because a bot token is the only way to
-use that account again; the file lives under the customer's user profile.
+핫키(버튼)들. 비밀번호는 저장하지 않습니다: Telethon 세션 파일이 로그인 상태를 들고
+있고, 그 파일은 sessions/ 안에만 있습니다.
 """
 import json
 import os
 import threading
 
 import config
+import hotkeys
 import paths
-import phrases
 
 _LOCK = threading.RLock()
 
 DEFAULT = {
     "api_id": "",
     "api_hash": "",
-    "accounts": [],          # {key, kind: user|bot, label, phone, token, enabled}
+    "accounts": [],          # {key, kind: "user", label, phone, enabled}
     "target": None,          # {"id": int, "title": str}
     "burst": dict(config.DEFAULTS),
-    "pools": {k: list(v) for k, v in phrases.DEFAULT_POOLS.items()},
-    "last_close": {},        # last 청산 form values, so the form comes back filled
+    "hotkeys": [],           # 메인 화면 버튼들. 비어 있으면 기본 핫키를 넣어준다.
 }
 
 
@@ -42,12 +41,10 @@ def load():
         for key, value in stored.items():
             if key == "burst" and isinstance(value, dict):
                 data["burst"].update(value)
-            elif key == "pools" and isinstance(value, dict):
-                for category, items in value.items():
-                    if isinstance(items, list) and items:
-                        data["pools"][category] = list(items)
             else:
                 data[key] = value
+        if not data.get("hotkeys"):
+            data["hotkeys"] = hotkeys.defaults()
         return data
 
 
@@ -64,14 +61,12 @@ def save(data):
 
 
 def redacted(data):
-    """A copy safe to put in an artifact: no api_hash, no bot tokens."""
+    """A copy safe to put in an artifact: no api_hash, phone numbers masked."""
     try:
         copy = json.loads(json.dumps(data))
         if copy.get("api_hash"):
             copy["api_hash"] = "***"
         for account in copy.get("accounts", []):
-            if account.get("token"):
-                account["token"] = "***"
             if account.get("phone"):
                 digits = str(account["phone"])
                 account["phone"] = digits[:4] + "***" + digits[-2:]

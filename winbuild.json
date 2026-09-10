@@ -1,0 +1,28 @@
+{
+  "name": "signal-room-bot",
+  "entry": "app/main.py",
+  "requirements": "requirements.txt",
+  "pyinstaller": [
+    "--onefile",
+    "--noconsole",
+    "--paths",
+    "app",
+    "--collect-all",
+    "telethon",
+    "--hidden-import",
+    "PIL._tkinter_finder",
+    "--exclude-module",
+    "numpy",
+    "--exclude-module",
+    "pandas",
+    "--exclude-module",
+    "matplotlib",
+    "--exclude-module",
+    "IPython"
+  ],
+  "screenshot": {
+    "args": ["--guidemo"],
+    "wait": 30,
+    "env": {"SIGNALROOM_NO_UPLOAD": "1", "GUIDEMO_HOLD_MS": "180000"}
+  }
+}

@@ -3,7 +3,7 @@
 
 계정은 고객이 가진 '진짜 사용자 계정'입니다. 봇이 아니라 사람 계정이라 전화번호로
 로그인하고(코드 -> 필요하면 2단계 비밀번호), 세션 파일은 %APPDATA% 안에만 저장합니다.
-봇 토큰도 보조 수단으로 받을 수 있습니다.
+봇은 쓰지 않습니다: 방에서 사람처럼 보여야 하므로 사람 계정(MTProto user client)만 씁니다.
 
 Telethon is asyncio and tkinter is not, so exactly one asyncio loop runs on a
 background thread for the whole program and the GUI hands it coroutines. Nothing
@@ -23,7 +23,6 @@ try:
                                  PhoneCodeExpiredError,
                                  SessionPasswordNeededError,
                                  PhoneNumberInvalidError)
-    from telethon.tl.types import InputPeerChannel, InputPeerChat, InputPeerUser
 except Exception as exc:  # noqa: BLE001 - reported in the GUI, never a crash
     _TELETHON_ERROR = exc
     TelegramClient = None
@@ -92,7 +91,7 @@ class Manager(object):
         api_id = str(settings.get("api_id") or "").strip()
         api_hash = str(settings.get("api_hash") or "").strip()
         if not api_id.isdigit() or len(api_hash) < 20:
-            raise TgError("설정 탭에서 API ID 와 API HASH 를 먼저 입력해 주세요. "
+            raise TgError("계정 설정에서 API ID 와 API HASH 를 먼저 입력해 주세요. "
                           "my.telegram.org 에서 받으실 수 있습니다.")
         return int(api_id), api_hash
 
@@ -119,12 +118,9 @@ class Manager(object):
         client = self._new_client(key)
         await client.connect()
         if not await client.is_user_authorized():
-            if account.get("kind") == "bot" and account.get("token"):
-                await client.sign_in(bot_token=account["token"])
-            else:
-                await client.disconnect()
-                raise TgError("[%s] 로그인이 풀렸습니다. 계정 탭에서 다시 로그인해 주세요."
-                              % account.get("label", key))
+            await client.disconnect()
+            raise TgError("[%s] 로그인이 풀렸습니다. 계정 설정에서 다시 로그인해 주세요."
+                          % account.get("label", key))
         with self._lock:
             self._clients[key] = client
         return client
@@ -205,27 +201,6 @@ class Manager(object):
         return {"key": key, "kind": "user", "label": display_name(me),
                 "user_id": me.id, "username": getattr(me, "username", None)}
 
-    async def add_bot(self, token):
-        token = token.strip()
-        bot_id = token.split(":")[0]
-        if not bot_id.isdigit():
-            raise TgError("봇 토큰 형식이 올바르지 않습니다.")
-        key = "bot_" + bot_id
-        client = self._new_client(key)
-        await client.connect()
-        if not await client.is_user_authorized():
-            try:
-                await client.sign_in(bot_token=token)
-            except Exception as exc:  # noqa: BLE001
-                await client.disconnect()
-                raise TgError("봇 로그인에 실패했습니다: %s" % type(exc).__name__)
-        me = await client.get_me()
-        with self._lock:
-            self._clients[key] = client
-        return {"key": key, "kind": "bot", "label": display_name(me),
-                "user_id": me.id, "token": token,
-                "username": getattr(me, "username", None)}
-
     async def logout(self, account):
         """세션 파일까지 지웁니다."""
         key = account["key"]
@@ -265,25 +240,12 @@ class Manager(object):
             peer = await client.get_input_entity(int(chat_id))
         except Exception:  # noqa: BLE001
             peer = None
-        if peer is None and account.get("kind") != "bot":
+        if peer is None:
             try:
                 async for dialog in client.iter_dialogs():
                     if dialog.id == int(chat_id):
                         peer = await client.get_input_entity(dialog.entity)
                         break
-            except Exception:  # noqa: BLE001
-                peer = None
-        if peer is None and account.get("kind") == "bot":
-            # A bot never has dialogs; it can address a channel it is a member
-            # of by id with access_hash 0.
-            raw = int(chat_id)
-            try:
-                if raw < 0:
-                    marked = abs(raw)
-                    if str(marked).startswith("100"):
-                        peer = InputPeerChannel(int(str(marked)[3:]), 0)
-                    else:
-                        peer = InputPeerChat(marked)
             except Exception:  # noqa: BLE001
                 peer = None
         if peer is None:

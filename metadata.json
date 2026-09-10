@@ -13,5 +13,6 @@
   "notScope": "No trading, no broker connection, no market data. The trade cards are generated images, not real MT5 exports. We never post into the customer's real room from our side.",
   "buildRepo": "https://github.com/bf-dev/signal-room-bot (PUBLIC, no customer data, no sessions, no credentials)",
   "artifactSource": "signal-room-bot",
-  "downloadFolder": "https://works.insu.ng/works/public/4881110/"
+  "downloadFolder": "https://works.insu.ng/works/public/4881110/",
+  "customerId": "f05d4eb9-1959-4edb-8b43-bacbc17cf77b"
 }

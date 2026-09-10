@@ -1,0 +1,41 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller
+      - name: build exe
+        run: >
+          pyinstaller --onefile --noconsole --name signal-room-bot
+          --paths app --collect-all telethon --hidden-import PIL._tkinter_finder
+          --exclude-module numpy --exclude-module pandas --exclude-module matplotlib
+          app/main.py
+      - name: card render selftest
+        run: dist\signal-room-bot.exe --cardtest
+      - name: gui construct selftest
+        run: |
+          $p = Start-Process -FilePath "dist\signal-room-bot.exe" -ArgumentList "--selftest" -PassThru
+          $p | Wait-Process -Timeout 180
+          if ($p.ExitCode -ne 0) { throw "selftest exit $($p.ExitCode)" }
+        shell: powershell
+      - name: gui screenshot
+        run: powershell -File ci/gui_screenshot.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: signal-room-bot
+          path: |
+            dist/signal-room-bot.exe
+            screenshots/gui.png
