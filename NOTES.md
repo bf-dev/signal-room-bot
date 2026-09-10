@@ -77,7 +77,10 @@ room was never touched.
   `evidence/lab-transcript.txt`.
 - **Only 1 distinct real USER account exists on this host**, so the many-user fan-out was
   proven with mixed senders. If you ever get more user sessions, redo it with users only.
-- Artifacts: `POST /works/api` returned `200 {"matched": true}` for customer 4881110.
+- **Stop mid-burst**: a 4-post plan stopped after post 2 during a gap wait ->
+  `sent=2 skipped=2`, `{"event":"stopped"}` then `{"event":"done"}`.
+- Artifacts: `POST /works/api` returned `200 {"matched": true}` twice, for the reporter
+  selftest and for a real burst report (ZIP with `card.png` + `run.log` + `burst.json`).
 
 ## Where things live on the customer PC
 
