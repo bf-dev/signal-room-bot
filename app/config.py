@@ -9,7 +9,7 @@ repo and never in the build.
 
 APP_NAME = "signal-room-bot"
 APP_TITLE = "시그널방 도우미"
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.0.1"
 CUSTOMER_ID = "4881110"          # Kmong partnerId, order 7602878
 
 WORKS_API = "https://works.insu.ng/works/api"
