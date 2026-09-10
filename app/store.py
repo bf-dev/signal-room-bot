@@ -37,7 +37,7 @@ def load():
             with open(_path(), encoding="utf-8") as handle:
                 stored = json.load(handle)
         except Exception:  # noqa: BLE001
-            return data
+            stored = {}       # 첫 실행: 기본 핫키가 들어간 설정으로 시작합니다.
         for key, value in stored.items():
             if key == "burst" and isinstance(value, dict):
                 data["burst"].update(value)
