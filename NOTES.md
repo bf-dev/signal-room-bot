@@ -6,8 +6,8 @@ people typing. Korean GUI, no console, everything configurable in the window.
 
 - Customer: kmong partnerId **4881110** (neoworks customer id `f05d4eb9-1959-4edb-8b43-bacbc17cf77b`)
 - Build repo (PUBLIC, no customer data): https://github.com/bf-dev/signal-room-bot
-- Download: https://works.insu.ng/works/public/4881110/signal-room-bot-1.0.0.exe
-- Update manifest: `.../4881110/version-signal-room-bot.json` (exe swap, house updater)
+- Download: https://works.insu.ng/works/public/4881110/signal-room-bot-1.0.1.zip
+- Update manifest: `.../4881110/version-signal-room-bot.json` -> `zipUrl` (folder swap)
 - Artifacts source: `signal-room-bot-*` (startup / burst / error / selftest)
 
 ## Build / run
@@ -21,7 +21,20 @@ python app/reporter.py             # Artifacts wire proof, prints matched:true
 ```
 
 Windows build is **GitHub Actions** (`.github/workflows/build.yml`, windows-latest,
-PyInstaller `--onefile --noconsole`). It also runs `--cardtest`, `--selftest` and captures
+PyInstaller `--onedir --noconsole`, zipped with the Korean guide inside).
+
+**ONEDIR, NEVER ONEFILE.** A 29MB onefile deliverable on this account unpacked ~1300 files
+into `%TEMP%` on every launch, took **3m44s** to start on a real customer PC and was then
+blocked by Windows (2026-08-25). This build is 1222 files / 25.3MB zipped and starts in
+**0.54-0.58s** on the runner from the extracted ZIP. The updater is a **folder swap** to
+match: the manifest carries `zipUrl`, `updater.py` downloads the ZIP, verifies size, and a
+PowerShell `-EncodedCommand` helper waits for the PID, `Copy-Item -Recurse` merges the new
+folder in, and relaunches by the exe name found in the unpacked folder.
+
+Two CI gotchas that cost a run: Windows PowerShell 5.1 reads a YAML-embedded script as ANSI
+and mangles the `_읽어주세요.txt` literal (use `shell: pwsh` and match `_*.txt` by pattern),
+and `Compress-Archive` stores that name without the UTF-8 flag, so Linux `unzip` shows
+mojibake while Windows shows it correctly. It also runs `--cardtest`, `--selftest` and captures
 all three screens with `ci/gui_screenshot.ps1` (PrintWindow on the real desktop session).
 `gh run download <id>` gives `dist/signal-room-bot.exe` + `screenshots/*.png`.
 `winbuild` also works but its screenshot step hung on 2026-09-10 ("Task may not run
