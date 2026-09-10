@@ -1,0 +1,17 @@
+{
+  "kmongOrderId": "7602878",
+  "neoworksCustomerId": "4881110",
+  "partnerId": "4881110",
+  "customerName": "마린투자그룹",
+  "orderTitle": "텔레그램 시그널방 반응 자동화 프로그램",
+  "orderAmountKRW": 100000,
+  "orderStatus": "ONGOING",
+  "dueDate": "2026-09-10",
+  "project": "해외선물 시그널방 대기/진입/수익인증 버스트 프로그램 (Windows)",
+  "deliverable": "Python + PyInstaller Windows exe, Korean tkinter GUI, Telethon multi-account (user login + optional bot token), MT5-style trade card PNG generator, Artifacts API source signal-room-bot, house auto-updater.",
+  "scope": "The customer runs one 해외선물 signal room on Telegram (09:30-17:30 KST, 3-6 signals/day). The program fires three bursts into that room from many member accounts they own: 대기, 진입(바이/셀), 청산(수익인증 with a generated MT4/MT5-style trade card per account). Accounts, room, phrase pools and burst timing are all set in the GUI; nothing is hand-edited.",
+  "notScope": "No trading, no broker connection, no market data. The trade cards are generated images, not real MT5 exports. We never post into the customer's real room from our side.",
+  "buildRepo": "https://github.com/bf-dev/signal-room-bot (PUBLIC, no customer data, no sessions, no credentials)",
+  "artifactSource": "signal-room-bot",
+  "downloadFolder": "https://works.insu.ng/works/public/4881110/"
+}

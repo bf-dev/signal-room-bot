@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.session
+*.session-journal
+.env
+out/
+dist/
+build/
+*.spec
+lab/
+evidence/*.private*
