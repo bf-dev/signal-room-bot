@@ -9,12 +9,12 @@ repo and never in the build.
 
 APP_NAME = "signal-room-bot"
 APP_TITLE = "시그널방 도우미"
-APP_VERSION = "1.0.1"
+APP_VERSION = "1.0.2"
 CUSTOMER_ID = "4881110"          # Kmong partnerId, order 7602878
 
 WORKS_API = "https://works.insu.ng/works/api"
 ARTIFACT_SOURCE = "signal-room-bot"
-VERSION_URL = ("https://works.insu.ng/works/public/%s/version-%s.json"
+VERSION_URL = ("https://static.neoworks.us/%s/version-%s.json"
                % (CUSTOMER_ID, APP_NAME))
 UPDATE_CHECK_SECONDS = 1800
 
